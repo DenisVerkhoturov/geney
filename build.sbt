@@ -1,7 +1,7 @@
 import Dependencies._
 
-ThisBuild / version       := "0.1"
-ThisBuild / scalaVersion  := "2.13.1"
+ThisBuild / version      := "0.1"
+ThisBuild / scalaVersion := "2.13.1"
 ThisBuild / scalacOptions := Seq(
   "-encoding",
   "utf8",
@@ -11,7 +11,7 @@ ThisBuild / scalacOptions := Seq(
 
 lazy val root = (project in file("."))
   .settings(
-    name := "Geney",
+    name        := "Geney",
     description := "De Bruijn graph-based De Nova genome assembly CLI tool"
   )
   .aggregate(assembler, cli, utils)
@@ -42,3 +42,22 @@ lazy val commonDependencies = Seq(
   scalastic,
   scalatest
 )
+
+lazy val formatAll   = taskKey[Unit]("Format all the source code which includes src, test, and build files")
+lazy val checkFormat = taskKey[Unit]("Check all the source code which includes src, test, and build files")
+
+lazy val commonSettings = Seq(
+  formatAll := {
+    (scalafmt in Compile).value
+    (scalafmt in Test).value
+  },
+  checkFormat := {
+    (scalafmtCheck in Compile).value
+    (scalafmtCheck in Test).value
+  },
+  compile in Compile := (compile in Compile).dependsOn(checkFormat).value,
+  test in Test       := (test in Test).dependsOn(checkFormat).value
+)
+
+addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
+addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
