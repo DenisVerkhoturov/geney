@@ -21,7 +21,7 @@ class CliParser {
         .action((x, c) => c.copy(k = x))
         .text("k is an  integer property, the length of k that will be used to build De Bruijn graph")
         .validate( k =>
-          if (k > 2) success
+          if (k >= 2) success
           else failure("Option -k must be >2") ),
       opt[File]('i', "input")
         .valueName("<file>")
