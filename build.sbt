@@ -28,6 +28,7 @@ lazy val cli = project
   .settings(
     name := "Command line interface",
     libraryDependencies ++= commonDependencies
+
   )
   .aggregate(assembler, utils)
   .dependsOn(assembler, utils)
@@ -42,7 +43,8 @@ lazy val commonDependencies = Seq(
   scalastic,
   scalatest,
   silencerPlugin,
-  silencerLib
+  silencerLib,
+  "com.github.scopt" %% "scopt" % "4.0.0-RC2"
 )
 
 lazy val formatAll   = taskKey[Unit]("Format all the source code which includes src, test, and build files")
@@ -63,3 +65,5 @@ lazy val commonSettings = Seq(
 
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
+
+
