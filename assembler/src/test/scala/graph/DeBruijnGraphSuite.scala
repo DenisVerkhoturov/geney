@@ -1,9 +1,17 @@
 package graph
 
+import com.github.ghik.silencer.silent
+import org.scalatest.concurrent.{Signaler, TimeLimitedTests}
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.time.{Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpec
 
-class DeBruijnGraphSuite extends AnyWordSpec with Matchers {
+class DeBruijnGraphSuite extends AnyWordSpec with Matchers with TimeLimitedTests {
+  val timeLimit: Span = Span(10, Seconds)
+
+  @silent
+  override val defaultTestSignaler: Signaler = (testThread: Thread) => testThread.stop()
+
   "DeBruijnGraph" should {
     "throw IllegalArgumentException when provided k is less than 2" in {
       an[IllegalArgumentException] should be thrownBy new DeBruijnGraph(LazyList("ACGTCGA"), 0)
