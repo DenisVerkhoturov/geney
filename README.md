@@ -2,6 +2,7 @@
 
 [![License: MIT][license_badge]][license_link]
 [![Contributor Covenant][coc_badge]](CODE-OF-CONDUCT.md)
+[![Mutation testing badge][stryker_badge]][stryker_link]
 
 > De Bruijn graph-based De Novo genome assembly CLI tool
 
@@ -55,3 +56,5 @@ This project is licenced under the terms of the [MIT](LICENSE.md) license.
 [license_badge]: https://img.shields.io/badge/License-MIT-blue.svg
 [coc_badge]: https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg
 [releases_link]: https://github.com/DenisVerkhoturov/geney/releases
+[stryker_badge]: https://img.shields.io/endpoint?style=flat&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2FDenisVerkhoturov%2Fgeney%2Fmaster
+[stryker_link]: https://dashboard.stryker-mutator.io/reports/github.com/DenisVerkhoturov/geney/master

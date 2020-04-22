@@ -40,7 +40,9 @@ lazy val utils = project
 
 lazy val commonDependencies = Seq(
   scalastic,
-  scalatest
+  scalatest,
+  silencerPlugin,
+  silencerLib
 )
 
 lazy val formatAll   = taskKey[Unit]("Format all the source code which includes src, test, and build files")
