@@ -5,7 +5,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.time.{Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpec
 
-class FastaSuite extends AnyWordSpec with Matchers with TimeLimitedTests {
+class FastaSpec extends AnyWordSpec with Matchers with TimeLimitedTests {
   override def timeLimit: Span = Span(10, Seconds)
 
   private val fastaSeq = Seq(
@@ -49,6 +49,11 @@ class FastaSuite extends AnyWordSpec with Matchers with TimeLimitedTests {
       val fasta        = new Fasta()
       val seqOfRecrods = Seq(record, record)
       fasta.shows(seqOfRecrods) shouldEqual (fastaSeq80 ++ fastaSeq80)
+    }
+
+    "return left value when read empty fasta sequence" in {
+      val fasta = new Fasta()
+      fasta.read(Seq()) shouldEqual Left("Input line is empty")
     }
   }
 }
