@@ -27,7 +27,7 @@ lazy val assembler = project
 lazy val cli = project
   .settings(
     name := "Command line interface",
-    libraryDependencies ++= commonDependencies
+    libraryDependencies ++= cliDependencies
   )
   .aggregate(assembler, utils)
   .dependsOn(assembler, utils)
@@ -43,6 +43,13 @@ lazy val commonDependencies = Seq(
   scalatest,
   silencerPlugin,
   silencerLib
+)
+lazy val cliDependencies = Seq(
+  scalastic,
+  scalatest,
+  silencerPlugin,
+  silencerLib,
+  scopt
 )
 
 lazy val formatAll   = taskKey[Unit]("Format all the source code which includes src, test, and build files")

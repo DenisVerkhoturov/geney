@@ -1,0 +1,56 @@
+package parser
+
+
+import scopt.{OParser, OParserBuilder}
+
+import java.io.File
+
+
+class CliParser {
+  val builder: OParserBuilder[CliParserConfig] = OParser.builder[CliParserConfig]
+  val parser: OParser[Unit, CliParserConfig] = {
+    import builder._
+    OParser.sequence(
+      programName("CliParser"),
+      head("CliParser"),
+      opt[File]("jar")
+          .valueName("<file>")
+          .action((x, c) => c.copy(input = x))
+          .text("jar file"),
+      opt[Int]('k',"")
+        .action((x, c) => c.copy(k = x))
+        .text("k is an  integer property, the length of k that will be used to build De Bruijn graph")
+        .validate( k =>
+          if (k >= 2) success
+          else failure("Option -k must be >2") ),
+      opt[File]('i', "input")
+        .valueName("<file>")
+        .action((x, c) => c.copy(input = x))
+        .text("input file with reads to be analyzed"),
+      opt[File]('o', "output")
+        .valueName("<file>")
+        .action((x, c) => c.copy(input = x))
+        .text("output file to write the result to"),
+      help('h',"help").text("show usage"),
+    )
+  }
+  //val args = Seq("");
+  // OParser.parse returns Option[Config]
+
+  def parse(args: Array[String]): Unit = {
+    OParser.parse(parser, args, CliParserConfig()) match {
+      case Some(config) =>
+        println("Args have been parsed successfully.")
+      case _ =>
+        println("Couldn't parse args.")
+    }
+  }
+
+}
+object Main {
+  val mainParser = new CliParser;
+  def main(args: Array[String]): Unit =
+  {
+    mainParser.parse(args);
+  }
+}
