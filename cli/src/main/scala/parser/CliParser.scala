@@ -1,7 +1,7 @@
 package parser
 
 
-import scopt.{OParser, OParserBuilder, OptionParser}
+import scopt.{OParser, OParserBuilder}
 
 import java.io.File
 
@@ -40,13 +40,17 @@ class CliParser {
   def parse(args: Array[String]): Unit = {
     OParser.parse(parser, args, CliParserConfig()) match {
       case Some(config) =>
-      // do something
+        println("Args have been parsed successfully.")
       case _ =>
-      // arguments are bad, error message will have been displayed
+        println("Couldn't parse args.")
     }
   }
 
-
-
-
+}
+object Main {
+  val mainParser = new CliParser;
+  def main(args: Array[String]): Unit =
+  {
+    mainParser.parse(args);
+  }
 }
