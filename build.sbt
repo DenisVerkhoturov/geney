@@ -45,7 +45,10 @@ lazy val commonDependencies = Seq(
   silencerLib
 )
 lazy val cliDependencies = Seq(
-  commonDependencies,
+  scalastic,
+  scalatest,
+  silencerPlugin,
+  silencerLib,
   scopt
 )
 
