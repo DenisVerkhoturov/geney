@@ -6,7 +6,10 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.time.{Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpec
 
-class DeBruijnGraphSuite extends AnyWordSpec with Matchers with TimeLimitedTests {
+import utils.CustomMatchers.beOneOf
+import utils.StringUtils.rotations
+
+class DeBruijnGraphSpec extends AnyWordSpec with Matchers with TimeLimitedTests {
   val timeLimit: Span = Span(10, Seconds)
 
   @silent
@@ -14,7 +17,9 @@ class DeBruijnGraphSuite extends AnyWordSpec with Matchers with TimeLimitedTests
 
   "DeBruijnGraph" should {
     "throw IllegalArgumentException when provided k is less than 2" in {
-      an[IllegalArgumentException] should be thrownBy new DeBruijnGraph(LazyList("ACGTCGA"), 0)
+      the[IllegalArgumentException] thrownBy {
+        new DeBruijnGraph(LazyList("ACGTCGA"), 1)
+      } should have message "requirement failed: k must be more than 1"
     }
 
     "produce empty graph when empty list provided" in {
@@ -71,6 +76,23 @@ class DeBruijnGraphSuite extends AnyWordSpec with Matchers with TimeLimitedTests
         }
 
       check(read, graph.branches)
+    }
+
+    "produce empty path when graph is empty" in {
+      new DeBruijnGraph(LazyList(), 3).path shouldBe empty
+    }
+
+    "produce empty path if read does not contain cycle" in {
+      new DeBruijnGraph(LazyList("ABCDE"), 3).path shouldBe empty
+    }
+
+    "produce path equal to any of provided read rotations if read contains cycle" in {
+      val k             = 3
+      val initialRead   = "ABABE"
+      val readWithCycle = initialRead ++ initialRead.take(k - 1)
+      val graph         = new DeBruijnGraph(LazyList(readWithCycle), k)
+
+      graph.path should beOneOf(rotations(initialRead))
     }
   }
 }
