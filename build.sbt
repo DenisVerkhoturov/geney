@@ -11,10 +11,13 @@ ThisBuild / scalacOptions := Seq(
 
 lazy val root = (project in file("."))
   .settings(
-    name        := "Geney",
-    description := "De Bruijn graph-based De Nova genome assembly CLI tool"
+    name                        := "Geney",
+    description                 := "De Bruijn graph-based De Nova genome assembly CLI tool",
+    mainClass in assembly       := Some("parser.Main"),
+    assemblyJarName in assembly := "geney.jar"
   )
   .aggregate(assembler, cli, utils)
+  .dependsOn(assembler, cli, utils)
 
 lazy val assembler = project
   .settings(
