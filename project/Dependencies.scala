@@ -5,7 +5,7 @@ object Dependencies {
     val scalastic = "3.1.1"
     val scalatest = "3.1.1"
     val silencer  = "1.6.0"
-    val scopt = "4.0.0-RC2"
+    val scopt     = "4.0.0-RC2"
   }
 
   val scalastic   = "org.scalactic"   %% "scalactic"   % Version.scalastic % Test
