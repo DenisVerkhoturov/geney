@@ -17,10 +17,6 @@ class CliParser {
     OParser.sequence(
       programName("CliParser"),
       head("CliParser"),
-      opt[File]("jar")
-        .valueName("<file>")
-        .action((x, c) => c.copy(jar = x))
-        .text("jar file"),
       opt[Int]('k',"")
         .action((x, c) => c.copy(k = x))
         .text("k is an  integer property, the length of k that will be used to build De Bruijn graph")
