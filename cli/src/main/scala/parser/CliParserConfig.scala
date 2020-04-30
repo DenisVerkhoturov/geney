@@ -7,4 +7,6 @@ case class CliParserConfig(
                    k: Int = -1,
                    input: File = new File("."),
                    output: File = new File(".")
+                   //input: File = new File("."),
+                   //output: File = new File(".")
                  )
