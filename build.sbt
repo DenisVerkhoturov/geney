@@ -25,7 +25,7 @@ lazy val assembler = project
     libraryDependencies ++= commonDependencies
   )
   .aggregate(utils)
-  .dependsOn(utils)
+  .dependsOn(utils % "test->test")
 
 lazy val cli = project
   .settings(
