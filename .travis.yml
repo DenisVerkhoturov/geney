@@ -11,6 +11,7 @@ matrix:
       language: shell
       filter_secrets: false
       install:
+        - choco uninstall jdk8
         - choco install scala.install
         - export SCALA_HOME="C:/Program Files/Scala"
         - export PATH="${PATH}:/c/Program Files/Scala/bin"
