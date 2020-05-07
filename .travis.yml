@@ -1,6 +1,10 @@
 language: scala
 scala:
   - 2.13.1
+os:
+  - linux
+  - osx
+  - windows
 jobs:
   include:
     - script: sbt ++$TRAVIS_SCALA_VERSION test
