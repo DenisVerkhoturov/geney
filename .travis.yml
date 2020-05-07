@@ -1,6 +1,6 @@
 scala:
   - 2.13.1
-jobs:
+matrix:
   include:
     - os: linux
       language: scala
@@ -15,6 +15,9 @@ jobs:
         - export PATH="${PATH}:/c/Program Files/Scala/bin"
       script:
         - bash gradlew --no-daemon check
-    script: sbt ++$TRAVIS_SCALA_VERSION test
-      stage: "Test coverage"
-        script: ./stryker.sh
+
+jobs:
+  include:
+    - script: sbt ++$TRAVIS_SCALA_VERSION test
+    - stage: "Test coverage"
+      script: ./stryker.sh
