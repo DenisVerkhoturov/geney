@@ -11,13 +11,10 @@ matrix:
       language: shell
       filter_secrets: false
       install:
+        - choco install jdk8
         - choco install sbt
-        - export SCALA_HOME="C:/Program Files/Scala"
-        - export PATH="${PATH}:/c/Program Files/Scala/bin"
       script:
-        - sbt ++$TRAVIS_SCALA_VERSION test
-      stage: "Test coverage"
-        script: ./stryker.sh
+        cmd.exe //c "RefreshEnv.cmd & sbt ++$TRAVIS_SCALA_VERSION test"
 
 jobs:
   include:
