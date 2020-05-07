@@ -1,21 +1,20 @@
 scala:
   - 2.13.1
-include:
-  - os: linux
-    language: scala
-  - os: osx
-    language: scala
-  - os: windows
-    language: shell
-    filter_secrets: false
-    install:
-      - choco install scala.install
-      - export SCALA_HOME="C:/Program Files/Scala"
-      - export PATH="${PATH}:/c/Program Files/Scala/bin"
-    script:
-      - bash gradlew --no-daemon check
 jobs:
   include:
-    - script: sbt ++$TRAVIS_SCALA_VERSION test
-    - stage: "Test coverage"
-      script: ./stryker.sh
+    - os: linux
+      language: scala
+    - os: osx
+      language: scala
+    - os: windows
+      language: shell
+      filter_secrets: false
+      install:
+        - choco install scala.install
+        - export SCALA_HOME="C:/Program Files/Scala"
+        - export PATH="${PATH}:/c/Program Files/Scala/bin"
+      script:
+        - bash gradlew --no-daemon check
+    script: sbt ++$TRAVIS_SCALA_VERSION test
+      stage: "Test coverage"
+        script: ./stryker.sh
