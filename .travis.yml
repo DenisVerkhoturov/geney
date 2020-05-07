@@ -1,22 +1,18 @@
 scala:
   - 2.13.1
-os:
-  - linux
-  language: scala
-  - osx
-  language: scala
-  - windows
-  language: shell
-
+include:
+  - os: linux
+    language: scala
+  - os: osx
+    language: scala
+  - os: windows
+    language: shell
     filter_secrets: false
-
     install:
       - choco install scala.install
-      - export 	SCALA_HOME="C:/Program Files/Scala"
+      - export SCALA_HOME="C:/Program Files/Scala"
       - export PATH="${PATH}:/c/Program Files/Scala/bin"
-
     script:
-
       - bash gradlew --no-daemon check
 jobs:
   include:
