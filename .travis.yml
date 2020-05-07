@@ -11,7 +11,7 @@ matrix:
       language: shell
       filter_secrets: false
       install:
-        - choco install scala --version=2.13.1
+        - choco install scala --version=2.10.3
         - export SCALA_HOME="C:/Program Files/Scala"
         - export PATH="${PATH}:/c/Program Files/Scala/bin"
       script:
