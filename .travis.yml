@@ -9,15 +9,11 @@ matrix:
       language: scala
     - os: windows
       language: shell
-      filter_secrets: false
       install:
         - choco install jdk8
         - choco install sbt
       script:
         cmd.exe //c "RefreshEnv.cmd & sbt ++$TRAVIS_SCALA_VERSION test"
-
-jobs:
-  include:
     - script: sbt ++$TRAVIS_SCALA_VERSION test
     - stage: "Test coverage"
       script: ./stryker.sh
