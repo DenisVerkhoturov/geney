@@ -1,8 +1,19 @@
 language: scala
 scala:
   - 2.13.1
-jobs:
+matrix:
   include:
+    - os: linux
+      language: scala
+    - os: osx
+      language: scala
+    - os: windows
+      language: shell
+      install:
+        - choco install jdk8
+        - choco install sbt
+      script:
+        cmd.exe //c "RefreshEnv.cmd & sbt ++$TRAVIS_SCALA_VERSION test"
     - script: sbt ++$TRAVIS_SCALA_VERSION test
     - stage: "Test coverage"
       script: ./stryker.sh
