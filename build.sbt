@@ -11,13 +11,10 @@ ThisBuild / scalacOptions := Seq(
 
 lazy val root = (project in file("."))
   .settings(
-    name                        := "Geney",
-    description                 := "De Bruijn graph-based De Nova genome assembly CLI tool",
-    mainClass in assembly       := Some("parser.Main"),
-    assemblyJarName in assembly := "geney.jar"
+    name        := "Geney",
+    description := "De Bruijn graph-based De Nova genome assembly CLI tool"
   )
   .aggregate(assembler, cli, utils)
-  .dependsOn(assembler, cli, utils)
 
 lazy val assembler = project
   .settings(
@@ -30,7 +27,8 @@ lazy val assembler = project
 lazy val cli = project
   .settings(
     name := "Command line interface",
-    libraryDependencies ++= cliDependencies
+    libraryDependencies ++= cliDependencies,
+    assemblyJarName in assembly := s"geney-${version.value}.jar"
   )
   .aggregate(assembler, utils)
   .dependsOn(assembler, utils)
