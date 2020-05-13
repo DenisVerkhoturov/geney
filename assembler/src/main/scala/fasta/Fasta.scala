@@ -1,5 +1,7 @@
 package fasta
 
+import parser.Parser
+
 class Fasta extends Parser[Record] {
   override def show(record: Record): Seq[String] =
     record.description +: record.data.grouped(80).toSeq

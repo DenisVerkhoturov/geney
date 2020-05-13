@@ -1,4 +1,4 @@
-package fasta
+package parser
 
 trait Parser[T] {
   def show(record: T): Seq[String]
