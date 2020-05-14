@@ -130,12 +130,12 @@ class FunctionalSpec extends AnyWordSpec with Matchers with TimeLimitedTests {
       }
     }
     "Incorrect argument --output" should {
-      "show error-message when output file does not exist" in new Files {
+      "show error-message when output file already exists" in new Files {
         pendingUntilFixed {
           the[IllegalArgumentException] thrownBy {
-            val args = Array("--input", inputFile.getAbsolutePath, "--output", "pathToFileThatDoesNotExist", "-k", "10")
+            val args = Array("--input", inputFile.getAbsolutePath, "--output", outputFile.getAbsolutePath, "-k", "10")
             Main.main(args);
-          } should have message "Output file does not exist."
+          } should have message "Output file already exists."
         }
       }
       "show error-message when user does not have access to output file" in {
