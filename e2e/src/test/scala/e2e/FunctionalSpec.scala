@@ -1,6 +1,8 @@
 package e2e
 
 import java.io.{ByteArrayOutputStream, File, FileWriter, StringReader}
+import java.nio.file.{AccessDeniedException, Files, Path}
+import java.nio.file.attribute.PosixFilePermissions
 
 import org.scalatest.concurrent.TimeLimitedTests
 import org.scalatest.matchers.should.Matchers
@@ -8,20 +10,20 @@ import org.scalatest.time.{Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpec
 import parser.Main
 
-import scala.io.BufferedSource
+import scala.io.{BufferedSource, Source}
 
 class FunctionalSpec extends AnyWordSpec with Matchers with TimeLimitedTests {
   override def timeLimit: Span = Span(10, Seconds)
   trait Files {
     val inputFile: File = File.createTempFile("input", "txt");
-    val outputFile: File = File.createTempFile("output", "txt");
+    val outputFile: File = File.createTempFile("invalid", "txt");
 
     val writer = new FileWriter(inputFile);
     val source: BufferedSource = scala.io.Source.fromFile(outputFile)
   }
   "Arguments for Cli parser" when {
     "help mode" should {
-      "show usage-message when no arguments provided" in new Files {
+      "show usage-message when no arguments provided" in {
         pendingUntilFixed {
           val args = new Array[String](0);
           Main.main(args);
@@ -118,7 +120,14 @@ class FunctionalSpec extends AnyWordSpec with Matchers with TimeLimitedTests {
           } should have message "Input file does not exist."
         }
       }
-      "show error-message when user does not have access to input file" in {
+      "show error-message when user does not have access to input file" in new Files {
+         pendingUntilFixed {
+          inputFile.setReadable(false);
+          the[AccessDeniedException] thrownBy {
+            val args = Array("--input", inputFile.getAbsolutePath, "-k", "10")
+            Main.main(args);
+          } should have message "Access denied"
+        }
       }
       "show error-message when path to input file is a directory" in new Files {
         pendingUntilFixed {
@@ -138,7 +147,16 @@ class FunctionalSpec extends AnyWordSpec with Matchers with TimeLimitedTests {
           } should have message "Output file already exists."
         }
       }
-      "show error-message when user does not have access to output file" in {
+      "show error-message when user does not have access to output file" in new Files {
+        pendingUntilFixed {
+          val ownerWritable = PosixFilePermissions.fromString("---------")
+          val permissions = PosixFilePermissions.asFileAttribute(ownerWritable)
+          val dirWithNoAccess = Files.createTempDirectory("dirWithNoAccess", permissions).toFile
+          the[AccessDeniedException] thrownBy {
+            val args = Array("--input", inputFile.getAbsolutePath, "--output", dirWithNoAccess.getAbsolutePath + "/output.txt", "-k", "10")
+            Main.main(args);
+          } should have message "Access denied"
+        }
       }
       "show error-message when path to output file is a directory" in new Files {
         pendingUntilFixed {
