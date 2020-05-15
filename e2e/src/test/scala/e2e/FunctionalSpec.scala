@@ -167,5 +167,32 @@ class FunctionalSpec extends AnyWordSpec with Matchers with TimeLimitedTests {
         }
       }
     }
+    "Correct arguments" should {
+      "use stdout when argument --output is not provided" in new Files {
+         pendingUntilFixed {
+          val args = Array("--input", inputFile.getAbsolutePath, "-k", "10", "-f", "fasta")
+          Main.main(args);
+          writer.write(">id description\n ABCDE");
+          writer.close();
+          val out = new ByteArrayOutputStream()
+          Console.withOut(out) {
+            Main.main(args);
+          }
+          out.toString shouldBe("")
+        }
+      }
+      "use stdin when argument --input is not provided" in new Files {
+        pendingUntilFixed {
+          val outputPath = inputFile.getParent + "/output.txt";
+          val args = Array("--output", outputPath, "-k", "10", "-f", "fasta")
+          Main.main(args);
+          val in = new StringReader(">id description\n ABCDE")
+          Console.withIn(in) {
+            Main.main(args);
+          }
+          source.getLines().toString() shouldBe("")
+        }
+      }
+    }
   }
 }
