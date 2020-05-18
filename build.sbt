@@ -14,7 +14,7 @@ lazy val root = (project in file("."))
     name        := "Geney",
     description := "De Bruijn graph-based De Nova genome assembly CLI tool"
   )
-  .aggregate(assembler, cli, utils)
+  .aggregate(assembler, cli, utils, e2e)
 
 lazy val assembler = project
   .settings(
@@ -38,6 +38,14 @@ lazy val utils = project
     name := "Utilities",
     libraryDependencies ++= commonDependencies
   )
+
+lazy val e2e = project
+  .settings(
+    name := "Functional tests",
+    libraryDependencies ++= commonDependencies
+  )
+  .aggregate(utils)
+  .dependsOn(cli, utils % "test->test")
 
 lazy val commonDependencies = Seq(
   scalastic,
