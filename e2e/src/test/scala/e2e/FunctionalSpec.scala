@@ -57,38 +57,38 @@ class FunctionalSpec extends AnyWordSpec with Matchers with TimeLimitedTests {
     }
     "Incorrect argument -k" should {
       "show error-message when argument -k is not provided" in new Files {
-        pendingUntilFixed {
-          the[IllegalArgumentException] thrownBy {
-            val args = Array("--input", inputFile.getAbsolutePath, "--output", "output.txt")
-            Main.main(args);
-          } should have message "Missing option -k"
-        }
+         val args = Array("--input", inputFile.getAbsolutePath, "--output", "output.txt", "-f", "fasta")
+         val out = new ByteArrayOutputStream()
+         Console.withErr(out) {
+           Main.main(args);
+         }
+         out.toString should (include("Missing option --k"))
       }
       "show error-message when argument -k is not positive number" in new Files {
-        pendingUntilFixed {
-          the[IllegalArgumentException] thrownBy {
-            val args = Array("--input", inputFile.getAbsolutePath, "-k", "-1")
-            Main.main(args);
-          } should have message "Argument -k must be a positive number"
+        val args = Array("--input", inputFile.getAbsolutePath, "-k", "-1", "-f", "fasta")
+        val out = new ByteArrayOutputStream()
+        Console.withErr(out) {
+          Main.main(args);
         }
+        out.toString should (include("Argument -k must be >2"))
       }
       "show error-message when argument -k is not a number" in new Files {
-        pendingUntilFixed {
-          the[IllegalArgumentException] thrownBy {
-            val args = Array("--input", inputFile.getAbsolutePath, "-k", "something")
-            Main.main(args);
-          } should have message "Argument -k must be a positive number"
+        val args = Array("--input", inputFile.getAbsolutePath, "-k", "something", "-f", "fasta")
+        val out = new ByteArrayOutputStream()
+        Console.withErr(out) {
+          Main.main(args);
         }
+        out.toString should (include("Option --k expects a number"))
       }
     }
     "Incorrect argument --format" should {
       "show error-message when argument -f is not provided" in new Files {
-        pendingUntilFixed {
-          the[IllegalArgumentException] thrownBy {
-            val args = Array("--input", inputFile.getAbsolutePath, "-k", "10")
-            Main.main(args);
-          } should have message "Missing option -f"
+        val args = Array("--input", inputFile.getAbsolutePath, "-k", "10")
+        val out = new ByteArrayOutputStream()
+        Console.withErr(out) {
+          Main.main(args);
         }
+        out.toString should (include("Missing option --format"))
       }
       "show error-message when argument -f is defined as fasta but content does not correspond" in new Files {
         pendingUntilFixed {
@@ -113,39 +113,39 @@ class FunctionalSpec extends AnyWordSpec with Matchers with TimeLimitedTests {
     }
     "Incorrect argument --input" should {
       "show error-message when input file does not exist" in {
-        pendingUntilFixed {
-          the[IllegalArgumentException] thrownBy {
-            val args = Array("--input", "PathToFileThatDoesNotExist", "-k", "10")
-            Main.main(args);
-          } should have message "Input file does not exist."
+        val args = Array("--input", "PathToFileThatDoesNotExist", "-k", "10", "-f", "fasta")
+        val out = new ByteArrayOutputStream()
+        Console.withErr(out) {
+          Main.main(args);
         }
+        out.toString should (include("Input file doesn't exist"))
       }
       "show error-message when user does not have access to input file" in new Files {
          pendingUntilFixed {
           inputFile.setReadable(false);
           the[AccessDeniedException] thrownBy {
-            val args = Array("--input", inputFile.getAbsolutePath, "-k", "10")
+            val args = Array("--input", inputFile.getAbsolutePath, "-k", "10", "-f", "fasta")
             Main.main(args);
           } should have message "Access denied"
         }
       }
       "show error-message when path to input file is a directory" in new Files {
-        pendingUntilFixed {
-          the[IllegalArgumentException] thrownBy {
-            val args = Array("--input", inputFile.getParent, "-k", "10")
-            Main.main(args);
-          } should have message "Path to input file is a directory."
+        val args = Array("--input", inputFile.getParent, "-k", "10", "-f", "fasta")
+        val out = new ByteArrayOutputStream()
+        Console.withErr(out) {
+          Main.main(args);
         }
+        out.toString should (include("Path to input file is a directory"))
       }
     }
     "Incorrect argument --output" should {
       "show error-message when output file already exists" in new Files {
-        pendingUntilFixed {
-          the[IllegalArgumentException] thrownBy {
-            val args = Array("--input", inputFile.getAbsolutePath, "--output", outputFile.getAbsolutePath, "-k", "10")
-            Main.main(args);
-          } should have message "Output file already exists."
+        val args = Array("--input", inputFile.getAbsolutePath, "--output", outputFile.getAbsolutePath, "-k", "10", "-f", "fasta")
+        val out = new ByteArrayOutputStream()
+        Console.withErr(out) {
+          Main.main(args);
         }
+        out.toString should (include("Output file already exists"))
       }
       "show error-message when user does not have access to output file" in new Files {
         pendingUntilFixed {
@@ -159,12 +159,12 @@ class FunctionalSpec extends AnyWordSpec with Matchers with TimeLimitedTests {
         }
       }
       "show error-message when path to output file is a directory" in new Files {
-        pendingUntilFixed {
-          the[IllegalArgumentException] thrownBy {
-            val args = Array("--input", inputFile.getAbsolutePath, "--output", outputFile.getParent, "-k", "10")
-            Main.main(args);
-          } should have message "Path to input file is a directory."
+        val args = Array("--input", inputFile.getAbsolutePath, "--output", outputFile.getParent, "-k", "10", "-f", "fasta")
+        val out = new ByteArrayOutputStream()
+        Console.withErr(out) {
+          Main.main(args);
         }
+        out.toString should (include("Path to output file is a directory"))
       }
     }
     "Correct arguments" should {
