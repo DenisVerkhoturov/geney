@@ -1,8 +1,8 @@
 package e2e
 
-import java.io.{ByteArrayOutputStream, File, FileWriter, StringReader}
+import java.io.{ByteArrayOutputStream, File, FileWriter, IOException, StringReader}
 import java.nio.file.{AccessDeniedException, Files, Path}
-import java.nio.file.attribute.PosixFilePermissions
+import java.nio.file.attribute.{AclEntry, AclEntryPermission, AclEntryType, AclFileAttributeView, PosixFilePermissions}
 
 import org.scalatest.concurrent.TimeLimitedTests
 import org.scalatest.matchers.should.Matchers
@@ -10,7 +10,7 @@ import org.scalatest.time.{Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpec
 import parser.Main
 
-import scala.io.{BufferedSource, Source}
+import scala.io.BufferedSource
 
 class FunctionalSpec extends AnyWordSpec with Matchers with TimeLimitedTests {
   override def timeLimit: Span = Span(10, Seconds)
@@ -20,6 +20,26 @@ class FunctionalSpec extends AnyWordSpec with Matchers with TimeLimitedTests {
 
     val writer = new FileWriter(inputFile);
     val source: BufferedSource = scala.io.Source.fromFile(outputFile)
+  }
+
+
+
+  @throws[IOException]
+  def inaccessible(path: Path): Path = {
+    val os = System.getProperty("os.name").toLowerCase
+    if (os.contains("win")) {
+      val currentUser = path.getFileSystem.getUserPrincipalLookupService.lookupPrincipalByName(System.getProperty("user.name"))
+      val view = Files.getFileAttributeView(path, classOf[AclFileAttributeView])
+      val denyReadAndWrite = AclEntry.newBuilder.setType(AclEntryType.DENY).setPrincipal(currentUser).setPermissions(AclEntryPermission.READ_DATA, AclEntryPermission.ADD_FILE).build
+      val acl = view.getAcl
+      acl.add(0, denyReadAndWrite)
+      view.setAcl(acl)
+    }
+    else {
+        path.toFile.setReadable(false)
+        path.toFile.setWritable(false)
+    }
+    path
   }
   "Arguments for Cli parser" when {
     "help mode" should {
@@ -121,13 +141,13 @@ class FunctionalSpec extends AnyWordSpec with Matchers with TimeLimitedTests {
         out.toString should (include("Input file doesn't exist"))
       }
       "show error-message when user does not have access to input file" in new Files {
-         pendingUntilFixed {
-          inputFile.setReadable(false);
-          the[AccessDeniedException] thrownBy {
-            val args = Array("--input", inputFile.getAbsolutePath, "-k", "10", "-f", "fasta")
-            Main.main(args);
-          } should have message "Access denied"
+        val inaccessiblePath = inaccessible(inputFile.toPath).toFile.getAbsolutePath
+        val args = Array("--input", inaccessiblePath, "-k", "10", "-f", "fasta")
+        val out = new ByteArrayOutputStream()
+        Console.withErr(out) {
+          Main.main(args);
         }
+        out.toString should (include("Access to input file is denied"))
       }
       "show error-message when path to input file is a directory" in new Files {
         val args = Array("--input", inputFile.getParent, "-k", "10", "-f", "fasta")
@@ -148,15 +168,13 @@ class FunctionalSpec extends AnyWordSpec with Matchers with TimeLimitedTests {
         out.toString should (include("Output file already exists"))
       }
       "show error-message when user does not have access to output file" in new Files {
-        pendingUntilFixed {
-          val ownerWritable = PosixFilePermissions.fromString("---------")
-          val permissions = PosixFilePermissions.asFileAttribute(ownerWritable)
-          val dirWithNoAccess = Files.createTempDirectory("dirWithNoAccess", permissions).toFile
-          the[AccessDeniedException] thrownBy {
-            val args = Array("--input", inputFile.getAbsolutePath, "--output", dirWithNoAccess.getAbsolutePath + "/output.txt", "-k", "10")
-            Main.main(args);
-          } should have message "Access denied"
+        val inaccessiblePath = inaccessible(Files.createTempDirectory("dirWithNoAccess")).toFile.getAbsolutePath
+        val args = Array("--input", inputFile.getAbsolutePath, "--output", inaccessiblePath + "/output.txt", "-k", "10", "-f", "fasta")
+        val out = new ByteArrayOutputStream()
+        Console.withErr(out) {
+          Main.main(args);
         }
+        out.toString should (include("Access to output file is denied"))
       }
       "show error-message when path to output file is a directory" in new Files {
         val args = Array("--input", inputFile.getAbsolutePath, "--output", outputFile.getParent, "-k", "10", "-f", "fasta")
