@@ -1,10 +1,12 @@
 package e2e
 
 import java.io.{ByteArrayOutputStream, File, FileWriter, IOException, StringReader}
-import java.nio.file.{AccessDeniedException, Files, Path}
+import java.nio.file.{Files, Path}
 import java.nio.file.attribute.{AclEntry, AclEntryPermission, AclEntryType, AclFileAttributeView, PosixFilePermissions}
 
+import org.scalatest.Assertion
 import org.scalatest.concurrent.TimeLimitedTests
+import org.scalatest.matchers.should
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.time.{Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpec
@@ -21,8 +23,13 @@ class FunctionalSpec extends AnyWordSpec with Matchers with TimeLimitedTests {
     val writer = new FileWriter(inputFile);
     val source: BufferedSource = scala.io.Source.fromFile(outputFile)
   }
-
-
+  def checkWithIncorrectArguments(args: Array[String], errorMessage: String) = {
+    val out = new ByteArrayOutputStream()
+    Console.withErr(out) {
+      Main.main(args);
+    }
+    out.toString should (include(errorMessage))
+  }
 
   @throws[IOException]
   def inaccessible(path: Path): Path = {
@@ -41,6 +48,7 @@ class FunctionalSpec extends AnyWordSpec with Matchers with TimeLimitedTests {
     }
     path
   }
+
   "Arguments for Cli parser" when {
     "help mode" should {
       "show usage-message when no arguments provided" in {
@@ -78,37 +86,21 @@ class FunctionalSpec extends AnyWordSpec with Matchers with TimeLimitedTests {
     "Incorrect argument -k" should {
       "show error-message when argument -k is not provided" in new Files {
          val args = Array("--input", inputFile.getAbsolutePath, "--output", "output.txt", "-f", "fasta")
-         val out = new ByteArrayOutputStream()
-         Console.withErr(out) {
-           Main.main(args);
-         }
-         out.toString should (include("Missing option --k"))
+         checkWithIncorrectArguments(args, "Missing option --k")
       }
       "show error-message when argument -k is not positive number" in new Files {
         val args = Array("--input", inputFile.getAbsolutePath, "-k", "-1", "-f", "fasta")
-        val out = new ByteArrayOutputStream()
-        Console.withErr(out) {
-          Main.main(args);
-        }
-        out.toString should (include("Argument -k must be >2"))
+        checkWithIncorrectArguments(args, "Argument -k must be >2")
       }
       "show error-message when argument -k is not a number" in new Files {
         val args = Array("--input", inputFile.getAbsolutePath, "-k", "something", "-f", "fasta")
-        val out = new ByteArrayOutputStream()
-        Console.withErr(out) {
-          Main.main(args);
-        }
-        out.toString should (include("Option --k expects a number"))
+        checkWithIncorrectArguments(args, "Option --k expects a number")
       }
     }
     "Incorrect argument --format" should {
       "show error-message when argument -f is not provided" in new Files {
         val args = Array("--input", inputFile.getAbsolutePath, "-k", "10")
-        val out = new ByteArrayOutputStream()
-        Console.withErr(out) {
-          Main.main(args);
-        }
-        out.toString should (include("Missing option --format"))
+        checkWithIncorrectArguments(args, "Missing option --format")
       }
       "show error-message when argument -f is defined as fasta but content does not correspond" in new Files {
         pendingUntilFixed {
@@ -132,57 +124,33 @@ class FunctionalSpec extends AnyWordSpec with Matchers with TimeLimitedTests {
       }
     }
     "Incorrect argument --input" should {
-      "show error-message when input file does not exist" in {
+      "show error-message when input file does not exist" in new Files {
         val args = Array("--input", "PathToFileThatDoesNotExist", "-k", "10", "-f", "fasta")
-        val out = new ByteArrayOutputStream()
-        Console.withErr(out) {
-          Main.main(args);
-        }
-        out.toString should (include("Input file doesn't exist"))
+        checkWithIncorrectArguments(args, "Input file doesn't exist")
       }
       "show error-message when user does not have access to input file" in new Files {
         val inaccessiblePath = inaccessible(inputFile.toPath).toFile.getAbsolutePath
         val args = Array("--input", inaccessiblePath, "-k", "10", "-f", "fasta")
-        val out = new ByteArrayOutputStream()
-        Console.withErr(out) {
-          Main.main(args);
-        }
-        out.toString should (include("Access to input file is denied"))
+        checkWithIncorrectArguments(args, "Access to input file is denied")
       }
       "show error-message when path to input file is a directory" in new Files {
         val args = Array("--input", inputFile.getParent, "-k", "10", "-f", "fasta")
-        val out = new ByteArrayOutputStream()
-        Console.withErr(out) {
-          Main.main(args);
-        }
-        out.toString should (include("Path to input file is a directory"))
+        checkWithIncorrectArguments(args, "Path to input file is a directory")
       }
     }
     "Incorrect argument --output" should {
       "show error-message when output file already exists" in new Files {
         val args = Array("--input", inputFile.getAbsolutePath, "--output", outputFile.getAbsolutePath, "-k", "10", "-f", "fasta")
-        val out = new ByteArrayOutputStream()
-        Console.withErr(out) {
-          Main.main(args);
-        }
-        out.toString should (include("Output file already exists"))
+        checkWithIncorrectArguments(args, "Output file already exists")
       }
       "show error-message when user does not have access to output file" in new Files {
         val inaccessiblePath = inaccessible(Files.createTempDirectory("dirWithNoAccess")).toFile.getAbsolutePath
         val args = Array("--input", inputFile.getAbsolutePath, "--output", inaccessiblePath + "/output.txt", "-k", "10", "-f", "fasta")
-        val out = new ByteArrayOutputStream()
-        Console.withErr(out) {
-          Main.main(args);
-        }
-        out.toString should (include("Access to output file is denied"))
+        checkWithIncorrectArguments(args, "Access to output file is denied")
       }
       "show error-message when path to output file is a directory" in new Files {
         val args = Array("--input", inputFile.getAbsolutePath, "--output", outputFile.getParent, "-k", "10", "-f", "fasta")
-        val out = new ByteArrayOutputStream()
-        Console.withErr(out) {
-          Main.main(args);
-        }
-        out.toString should (include("Path to output file is a directory"))
+        checkWithIncorrectArguments(args, "Path to output file is a directory")
       }
     }
     "Correct arguments" should {
@@ -191,8 +159,7 @@ class FunctionalSpec extends AnyWordSpec with Matchers with TimeLimitedTests {
           val args = Array("--input", inputFile.getAbsolutePath, "-k", "10", "-f", "fasta")
           Main.main(args);
           writer.write(">id description\n ABCDE");
-          writer.close();
-          val out = new ByteArrayOutputStream()
+          writer.close();val out = new ByteArrayOutputStream()
           Console.withOut(out) {
             Main.main(args);
           }
