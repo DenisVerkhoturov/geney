@@ -3,6 +3,7 @@ package parser
 
 import scopt.{OParser, OParserBuilder}
 import java.io.{File, PrintWriter}
+import java.nio.file.Files
 
 import fasta.Fasta
 import graph.DeBruijnGraph
@@ -26,10 +27,10 @@ class CliParser {
           else failure("Argument -k must be >2") ),
       opt[File]('i', "input")
         .required()
-        .validate(f =>
-          if (!f.exists()) failure("Input file doesn't exist")
-          else if (f.isDirectory) failure("Path to input file is a directory")
-          else if (!f.canRead) failure("Access to input file is denied")
+        .validate(input =>
+          if (!input.exists()) failure("Input file doesn't exist")
+          else if (input.isDirectory) failure("Path to input file is a directory")
+          else if (!Files.isReadable(input.toPath)) failure("Access to input file is denied")
           else success
         )
         .valueName("<file>")
@@ -41,7 +42,7 @@ class CliParser {
         .validate(output =>
           if (output.isDirectory) failure("Path to output file is a directory")
           else if (output.exists()) failure("Output file already exists")
-          else if (!output.getParentFile.canWrite) failure("Access to output file is denied")
+          else if (!Files.isWritable(output.getParentFile.toPath)) failure("Access to output file is denied")
           else success
         )
         .text("output file to write the result to"),
