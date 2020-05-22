@@ -1,9 +1,10 @@
 package parser
 
 import scopt.{OParser, OParserBuilder}
-import java.io.{File, PrintWriter}
+import java.io.{File, FileWriter, PrintStream, PrintWriter}
 import java.nio.file.Files
 
+import com.sun.tools.javac.resources.version
 import fasta.Fasta
 import graph.DeBruijnGraph
 
@@ -72,9 +73,21 @@ class CliParser {
     val source        = Source.fromFile(config.input);
     val deBruijnGraph = DeBruijnGraph(LazyList(source.toString()), config.k);
     source.close();
-    val writer = new PrintWriter(config.output);
-    writer.println("Here could be some info about graph");
-    writer.close();
+    config.format match {
+      case "fasta" => {
+        val fasta = new Fasta();
+        val fastaData = fasta.read(data);
+        if (config.output != null) System.setOut(new PrintStream(new File(config.output.getAbsolutePath)))
+
+        fastaData match{
+          case Left(string) => System.err.println(string)
+          case Right(record) => {
+            val deBruijnGraph = new DeBruijnGraph(LazyList(record.data), config.k);
+            System.out.println("geney-cli v. 0.1\n" + deBruijnGraph.path + "\n");
+          }
+        }
+      }
+    }
   }
 }
 object Main {
