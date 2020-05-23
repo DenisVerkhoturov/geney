@@ -7,6 +7,7 @@ import java.nio.file.Files
 
 import com.sun.tools.javac.resources.version
 import fasta.Fasta
+import fastq.Fastq
 import graph.DeBruijnGraph
 
 import scala.io.Source
@@ -43,7 +44,7 @@ class CliParser {
         .validate(output =>
           if (output.isDirectory) failure("Path to output file is a directory")
           else if (output.exists()) failure("Output file already exists")
-          else if (!Files.isWritable(output.getParentFile.toPath)) failure("Access to output file is denied")
+          else if (!Files.isWritable(output.getAbsoluteFile.getParentFile.toPath)) failure("Access to output file is denied")
           else success
         )
         .text("output file to write the result to"),
@@ -72,13 +73,23 @@ class CliParser {
     val source = Source.fromFile(config.input);
     val data = (for (line <- source.getLines()) yield line).toSeq
     source.close();
+    if (config.output != null) System.setOut(new PrintStream(new File(config.output.getAbsolutePath)))
     config.format match {
       case "fasta" => {
         val fasta = new Fasta();
         val fastaData = fasta.read(data);
-        if (config.output != null) System.setOut(new PrintStream(new File(config.output.getAbsolutePath)))
 
-        fastaData match{
+        fastaData match {
+          case Left(string) => System.err.println(string)
+          case Right(record) => {
+            val deBruijnGraph = new DeBruijnGraph(LazyList(record.data), config.k);
+            System.out.println("geney-cli v. 0.1\n" + deBruijnGraph.path + "\n");
+          }
+        }
+      }
+      case "fastq" => {
+        val fastqData = Fastq.read(data);
+        fastqData match {
           case Left(string) => System.err.println(string)
           case Right(record) => {
             val deBruijnGraph = new DeBruijnGraph(LazyList(record.data), config.k);
