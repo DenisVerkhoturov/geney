@@ -69,7 +69,7 @@ class CliParser {
   }
   private def processGraph(config: CliParserConfig): Unit = {
     val source = Source.fromFile(config.input);
-    val deBruijnGraph = new DeBruijnGraph(LazyList(source.toString()), config.k);
+    val deBruijnGraph = DeBruijnGraph(LazyList(source.toString()), config.k);
     source.close();
     val writer = new PrintWriter(config.output);
     writer.println("Here could be some info about graph");
