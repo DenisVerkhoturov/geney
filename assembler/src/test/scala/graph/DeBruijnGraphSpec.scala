@@ -18,18 +18,18 @@ class DeBruijnGraphSpec extends AnyWordSpec with Matchers with TimeLimitedTests 
   "DeBruijnGraph" should {
     "throw IllegalArgumentException when provided k is less than 2" in {
       the[IllegalArgumentException] thrownBy {
-        new DeBruijnGraph(LazyList("ACGTCGA"), 1)
+        DeBruijnGraph(LazyList("ACGTCGA"), 1)
       } should have message "requirement failed: k must be more than 1"
     }
 
     "produce empty graph when empty list provided" in {
-      val graph = new DeBruijnGraph(LazyList.empty, 5)
+      val graph = DeBruijnGraph(LazyList.empty, 5)
       graph.nodes shouldBe empty
       graph.branches shouldBe empty
     }
 
     "produce empty graph when k is bigger than any provided read's length" in {
-      val graph = new DeBruijnGraph(LazyList("ACGTCGA"), 10)
+      val graph = DeBruijnGraph(LazyList("ACGTCGA"), 10)
       graph.nodes shouldBe empty
       graph.branches shouldBe empty
     }
@@ -37,7 +37,7 @@ class DeBruijnGraphSpec extends AnyWordSpec with Matchers with TimeLimitedTests 
     "produce all k-1-mers as nodes from provided reads" in {
       val k     = 3
       val read  = "ACGTACGATGCA"
-      val nodes = new DeBruijnGraph(LazyList(read), k).nodes
+      val nodes = DeBruijnGraph(LazyList(read), k).nodes
 
       (0 to read.length - k + 1) foreach (i => nodes should contain(read.substring(i, i + k - 1)))
     }
@@ -45,7 +45,7 @@ class DeBruijnGraphSpec extends AnyWordSpec with Matchers with TimeLimitedTests 
     "produce all k-mers as branches from provided reads" in {
       val k        = 3
       val read     = "ACGTACGATGCA"
-      val branches = new DeBruijnGraph(LazyList(read), k).branches
+      val branches = DeBruijnGraph(LazyList(read), k).branches
 
       (0 to read.length - k) foreach { i =>
         val kmer = read.substring(i, i + k)
@@ -56,7 +56,7 @@ class DeBruijnGraphSpec extends AnyWordSpec with Matchers with TimeLimitedTests 
     "contain walk equal to initial read" in {
       val k     = 3
       val read  = "ACGTACGATGCA"
-      val graph = new DeBruijnGraph(LazyList(read), k)
+      val graph = DeBruijnGraph(LazyList(read), k)
 
       def check(read: String, branches: Map[String, List[String]]): Unit =
         if (read.length < k) branches shouldBe empty
@@ -79,20 +79,37 @@ class DeBruijnGraphSpec extends AnyWordSpec with Matchers with TimeLimitedTests 
     }
 
     "produce empty path when graph is empty" in {
-      new DeBruijnGraph(LazyList(), 3).path shouldBe empty
+      DeBruijnGraph(LazyList(), 3).path shouldBe empty
     }
 
     "produce empty path if read does not contain cycle" in {
-      new DeBruijnGraph(LazyList("ABCDE"), 3).path shouldBe empty
+      DeBruijnGraph(LazyList("ABCDE"), 3).path shouldBe empty
     }
 
     "produce path equal to any of provided read rotations if read contains cycle" in {
       val k             = 3
       val initialRead   = "ABABE"
       val readWithCycle = initialRead ++ initialRead.take(k - 1)
-      val graph         = new DeBruijnGraph(LazyList(readWithCycle), k)
+      val graph         = DeBruijnGraph(LazyList(readWithCycle), k)
 
       graph.path should beOneOf(rotations(initialRead))
+    }
+
+    "optimize empty graph to empty graph" in {
+      val graph     = DeBruijnGraph(LazyList(), 3)
+      val optimized = graph.optimized
+
+      optimized.nodes shouldBe empty
+      optimized.branches shouldBe empty
+    }
+
+    "correctly optimize non-empty graph" in {
+      val read      = "ABCDEFG"
+      val k         = 3
+      val optimized = DeBruijnGraph(LazyList(read), k).optimized
+
+      optimized.nodes shouldBe Set(read take k - 1, read takeRight k - 1)
+      optimized.branches shouldBe Map((read take k - 1, List(read drop k - 2)))
     }
   }
 }
