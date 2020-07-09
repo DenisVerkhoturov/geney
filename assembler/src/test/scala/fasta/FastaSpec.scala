@@ -30,30 +30,25 @@ class FastaSpec extends AnyWordSpec with Matchers with TimeLimitedTests {
 
   "Fasta" should {
     "produce record with description when fasta sequence provided" in {
-      val fasta = new Fasta()
-      fasta.read(fastaSeq) shouldEqual Right(record)
+      Fasta.read(fastaSeq) shouldEqual Right(record)
     }
 
     "produce fasta sequence when record provided" in {
-      val fasta = new Fasta()
-      fasta.show(record) shouldEqual (fastaSeq80)
+      Fasta.show(record) shouldEqual (fastaSeq80)
     }
 
     "produce sequence of records when more than one fasta sequence provided" in {
-      val fasta     = new Fasta()
       val mergedSeq = fastaSeq ++ fastaSeq
-      fasta.reads(mergedSeq) shouldEqual (Right(Seq(record, record)))
+      Fasta.reads(mergedSeq) shouldEqual (Right(Seq(record, record)))
     }
 
     "produce sequence of fasta sequence when sequence of records provided" in {
-      val fasta        = new Fasta()
       val seqOfRecrods = Seq(record, record)
-      fasta.shows(seqOfRecrods) shouldEqual (fastaSeq80 ++ fastaSeq80)
+      Fasta.shows(seqOfRecrods) shouldEqual (fastaSeq80 ++ fastaSeq80)
     }
 
     "return left value when read empty fasta sequence" in {
-      val fasta = new Fasta()
-      fasta.read(Seq()) shouldEqual Left("Input line is empty")
+      Fasta.read(Seq()) shouldEqual Left("Input line is empty")
     }
   }
 }

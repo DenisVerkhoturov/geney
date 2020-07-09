@@ -1,11 +1,12 @@
 package parser
 
-import scopt.{OParser, OParserBuilder}
-import java.io.{File, PrintWriter}
+import java.io.{File, PrintStream}
 import java.nio.file.Files
 
 import fasta.Fasta
+import fastq.Fastq
 import graph.DeBruijnGraph
+import scopt.{OParser, OParserBuilder}
 
 import scala.io.Source
 
@@ -44,7 +45,8 @@ class CliParser {
           output =>
             if (output.isDirectory) failure("Path to output file is a directory")
             else if (output.exists()) failure("Output file already exists")
-            else if (!Files.isWritable(output.getParentFile.toPath)) failure("Access to output file is denied")
+            else if (!Files.isWritable(output.getAbsoluteFile.getParentFile.toPath))
+              failure("Access to output file is denied")
             else success
         )
         .text("output file to write the result to"),
@@ -63,22 +65,38 @@ class CliParser {
   def parse(args: Array[String]): Unit =
     OParser.parse(parser, args, CliParserConfig()) match {
       case Some(config) =>
-        println("Args have been parsed successfully.");
-        processGraph(config);
+        println("Args have been parsed successfully.")
+        processGraph(config)
       case _ =>
-        System.err.println("Couldn't parse args.");
+        System.err.println("Couldn't parse args.")
     }
   private def processGraph(config: CliParserConfig): Unit = {
-    val source        = Source.fromFile(config.input);
-    val deBruijnGraph = DeBruijnGraph(LazyList(source.toString()), config.k);
-    source.close();
-    val writer = new PrintWriter(config.output);
-    writer.println("Here could be some info about graph");
-    writer.close();
+    val source = Source.fromFile(config.input)
+    val data   = (for (line <- source.getLines()) yield line).toSeq
+    source.close()
+    if (config.output != null) System.setOut(new PrintStream(new File(config.output.getAbsolutePath)))
+    config.format match {
+      case "fasta" =>
+        val fastaData = Fasta.reads(data)
+        fastaData match {
+          case Left(string) => System.err.println(string)
+          case Right(records) =>
+            val deBruijnGraph = DeBruijnGraph(records.map(_.data).to(LazyList), config.k)
+            System.out.println(Fasta.show(fasta.Record(">geney-cli v. 0.1", deBruijnGraph.path)).mkString("\n"))
+        }
+      case "fastq" =>
+        val fastqData = Fastq.reads(data)
+        fastqData match {
+          case Left(string) => System.err.println(string)
+          case Right(records) =>
+            val deBruijnGraph = DeBruijnGraph(records.map(_.data).to(LazyList), config.k)
+            System.out.println(Fastq.show(fastq.Record(">geney-cli v. 0.1", deBruijnGraph.path, "")).mkString("\n"))
+        }
+    }
   }
 }
 object Main {
-  val mainParser = new CliParser;
+  val mainParser = new CliParser
   def main(args: Array[String]): Unit =
-    mainParser.parse(args);
+    mainParser.parse(args)
 }
