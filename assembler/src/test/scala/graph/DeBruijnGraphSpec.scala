@@ -82,15 +82,10 @@ class DeBruijnGraphSpec extends AnyWordSpec with Matchers with TimeLimitedTests 
       DeBruijnGraph(LazyList(), 3).path shouldBe empty
     }
 
-    "produce empty path if read does not contain cycle" in {
-      DeBruijnGraph(LazyList("ABCDE"), 3).path shouldBe empty
-    }
-
     "produce path equal to any of provided read rotations if read contains cycle" in {
-      val k             = 3
-      val initialRead   = "ABABE"
-      val readWithCycle = initialRead ++ initialRead.take(k - 1)
-      val graph         = DeBruijnGraph(LazyList(readWithCycle), k)
+      val k           = 3
+      val initialRead = "ABABE"
+      val graph       = DeBruijnGraph(LazyList(initialRead), k)
 
       graph.path should beOneOf(rotations(initialRead))
     }
