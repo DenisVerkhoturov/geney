@@ -2,24 +2,28 @@ package graph
 
 case class DeBruijnGraph private (nodes: Set[String], branches: Map[String, List[String]], k: Int) {
   lazy val path: String = {
-    def findPath(acc: String, branches: Map[String, List[String]]): String =
-      if (branches.isEmpty) {
-        if ((acc take k - 1) == (acc takeRight k - 1)) acc dropRight k - 1
-        else ""
-      } else {
-        val left = acc takeRight k - 1
-        val paths = for {
-          right <- branches(left).to(LazyList)
-          path = findPath(acc + (right drop k - 2), deleteBranch(branches, (left, right)))
-          if path.nonEmpty
-        } yield path
+    def findPath(acc: String, branches: Map[String, List[String]], stack: List[String]): String = stack match {
+      case List() => acc dropRight k - 1
+      case x :: xs =>
+        val left = x takeRight k - 1
+        if (branches(left).isEmpty) {
+          val next = if (xs.isEmpty) x else x drop k - 2
+          findPath(next ++ acc, branches, xs)
+        } else {
+          val right = branches(left).head
+          findPath(acc, deleteBranch(branches, (left, right)), right :: stack)
+        }
+    }
 
-        if (paths.isEmpty) ""
-        else paths.head
-      }
+    if (nodes.isEmpty) ""
+    else {
+      val start = nodes.find(x => branches.count(leadsToNode(x)) < branches(x).length).getOrElse(nodes.head)
+      val end   = nodes.find(x => branches.count(leadsToNode(x)) > branches(x).length).getOrElse(nodes.head)
 
-    if (nodes.nonEmpty) findPath(nodes.head, branches)
-    else ""
+      val branchesWithCycle = branches updated (end, ((end takeRight k - 2) + start) :: branches(end))
+
+      findPath("", branchesWithCycle, List(start))
+    }
   }
 
   lazy val optimized: DeBruijnGraph = {
@@ -33,7 +37,7 @@ case class DeBruijnGraph private (nodes: Set[String], branches: Map[String, List
       }
 
     val (newNodes, newBranches) = optimize(nodes, branches)
-    new DeBruijnGraph(newNodes, newBranches, k)
+    new DeBruijnGraph(newNodes, newBranches withDefaultValue List(), k)
   }
 
   private def leadsToNode(node: String)(branches: (String, List[String])): Boolean =
