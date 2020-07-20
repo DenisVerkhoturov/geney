@@ -1,12 +1,10 @@
 package e2e
 
-import java.io.{ByteArrayOutputStream, File, FileWriter, IOException, StringReader}
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File, FileWriter, IOException, StringReader}
+import java.nio.file.attribute.{AclEntry, AclEntryPermission, AclEntryType, AclFileAttributeView}
 import java.nio.file.{Files, Path}
-import java.nio.file.attribute.{AclEntry, AclEntryPermission, AclEntryType, AclFileAttributeView, PosixFilePermissions}
 
-import org.scalatest.Assertion
 import org.scalatest.concurrent.TimeLimitedTests
-import org.scalatest.matchers.should
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.time.{Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpec
@@ -16,18 +14,18 @@ import scala.io.BufferedSource
 
 class FunctionalSpec extends AnyWordSpec with Matchers {
   trait Files {
-    val inputFile: File  = File.createTempFile("input", "txt");
-    val outputFile: File = File.createTempFile("invalid", "txt");
+    val inputFile: File  = File.createTempFile("input", ".txt")
+    val outputFile: File = File.createTempFile("invalid", ".txt")
 
-    val writer                 = new FileWriter(inputFile);
+    val writer                 = new FileWriter(inputFile)
     val source: BufferedSource = scala.io.Source.fromFile(outputFile)
   }
   def checkWithIncorrectArguments(args: Array[String], errorMessage: String) = {
     val out = new ByteArrayOutputStream()
     Console.withErr(out) {
-      Main.main(args);
+      Main.main(args)
     }
-    out.toString should (include(errorMessage))
+    out.toString should include(errorMessage)
   }
 
   @throws[IOException]
@@ -56,26 +54,26 @@ class FunctionalSpec extends AnyWordSpec with Matchers {
     "help mode" should {
       "show usage-message when no arguments provided" in {
         pendingUntilFixed {
-          val args = new Array[String](0);
-          Main.main(args);
+          val args = new Array[String](0)
+          Main.main(args)
           val input = new StringReader("")
           val out   = new ByteArrayOutputStream()
           Console.withIn(input) {
             Console.withOut(out) {
-              Main.main(args);
+              Main.main(args)
             }
           }
-          out.toString shouldBe ("java -jar target/scala-2.13/geney.jar <options>")
+          out.toString shouldBe "java -jar target/scala-2.13/geney.jar <options>"
         }
       }
       /*"show help-message when is called with option -h or --help" in new Files {
         pendingUntilFixed {
-          val args: Array[String] = Array("-h", "--input", inputFile.getAbsolutePath);
+          val args: Array[String] = Array("-h", "--input", inputFile.getAbsolutePath)
           val in = new StringReader("")
           val out = new ByteArrayOutputStream()
           Console.withIn(in) {
             Console.withOut(out) {
-              Main.main(args);
+              Main.main(args)
             }
           }
           out.toString should(include("CliParser") and
@@ -111,7 +109,7 @@ class FunctionalSpec extends AnyWordSpec with Matchers {
             val args = Array("--input", inputFile.getAbsolutePath, "-k", "10", "-f", "fasta")
             writer.write("ATGC")
             writer.close()
-            Main.main(args);
+            Main.main(args)
           } should have message "Incorrect format of input file."
         }
       }
@@ -121,7 +119,7 @@ class FunctionalSpec extends AnyWordSpec with Matchers {
             val args = Array("--input", inputFile.getAbsolutePath, "-k", "10", "-f", "fastq")
             writer.write("ATGC")
             writer.close()
-            Main.main(args);
+            Main.main(args)
           } should have message "Incorrect format of input file."
         }
       }
@@ -142,10 +140,13 @@ class FunctionalSpec extends AnyWordSpec with Matchers {
       }
     }
     "Incorrect argument --output" should {
-      "show error-message when output file already exists" in new Files {
+      "show error message if output file already exists without '--force' flag" in new Files {
         val args =
           Array("--input", inputFile.getAbsolutePath, "--output", outputFile.getAbsolutePath, "-k", "10", "-f", "fasta")
-        checkWithIncorrectArguments(args, "Output file already exists")
+        checkWithIncorrectArguments(
+          args,
+          "File " + outputFile.getAbsolutePath + " already exists. Use flag '--force' to override existing file."
+        )
       }
       "show error-message when user does not have access to output file" in new Files {
         val inaccessiblePath = inaccessible(Files.createTempDirectory("dirWithNoAccess")).toFile.getAbsolutePath
@@ -169,26 +170,48 @@ class FunctionalSpec extends AnyWordSpec with Matchers {
       "use stdout when argument --output is not provided" in new Files {
         pendingUntilFixed {
           val args = Array("--input", inputFile.getAbsolutePath, "-k", "10", "-f", "fasta")
-          Main.main(args);
-          writer.write(">id description\n ABCDE");
-          writer.close(); val out = new ByteArrayOutputStream()
+          Main.main(args)
+          writer.write(">id description\n ABCDE")
+          writer.close()
+          val out = new ByteArrayOutputStream()
           Console.withOut(out) {
-            Main.main(args);
+            Main.main(args)
           }
-          out.toString shouldBe ("")
+          out.toString shouldBe ""
         }
       }
       "use stdin when argument --input is not provided" in new Files {
         pendingUntilFixed {
-          val outputPath = inputFile.getParent + "/output.txt";
+          val outputPath = inputFile.getParent + "/output.txt"
           val args       = Array("--output", outputPath, "-k", "10", "-f", "fasta")
-          Main.main(args);
+          Main.main(args)
           val in = new StringReader(">id description\n ABCDE")
           Console.withIn(in) {
-            Main.main(args);
+            Main.main(args)
           }
-          source.getLines().toString() shouldBe ("")
+          source.getLines().toString() shouldBe ""
         }
+      }
+      "use existing output file if '--force' flag is provided" in new Files {
+        val args =
+          Array("--input",
+                inputFile.getAbsolutePath,
+                "--output",
+                outputFile.getAbsolutePath,
+                "-k",
+                "10",
+                "-f",
+                "fasta",
+                "--force")
+        writer.write(">id description\n ABCDE")
+
+        val out = new ByteArrayOutputStream()
+
+        Console.withOut(out) {
+          Main.main(args)
+        }
+
+        source.getLines.toList should contain(">geney-cli v. 0.1")
       }
     }
   }

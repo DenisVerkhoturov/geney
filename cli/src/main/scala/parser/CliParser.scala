@@ -8,7 +8,7 @@ import fastq.Fastq
 import graph.DeBruijnGraph
 import scopt.{OParser, OParserBuilder}
 
-import scala.io.Source
+import scala.io.{Source, StdIn}
 
 class CliParser {
   val builder: OParserBuilder[CliParserConfig] = OParser.builder[CliParserConfig]
@@ -44,7 +44,6 @@ class CliParser {
         .validate(
           output =>
             if (output.isDirectory) failure("Path to output file is a directory")
-            else if (output.exists()) failure("Output file already exists")
             else if (!Files.isWritable(output.getAbsoluteFile.getParentFile.toPath))
               failure("Access to output file is denied")
             else success
@@ -59,7 +58,17 @@ class CliParser {
           case "derive" => success
           case _        => failure("Wrong type of format")
         },
-      help('h', "help").text("show usage")
+      opt[Unit]("force")
+        .action((_, c) => c.copy(force = true))
+        .text("flag to force override output file"),
+      help('h', "help").text("show usage"),
+      checkConfig(c => {
+        if (c.output != null && c.output.exists() && !c.force)
+          failure(
+            "File " + c.output.getAbsolutePath + " already exists. Use flag '--force' to override existing file."
+          )
+        else success
+      })
     )
   }
   def parse(args: Array[String]): Unit =
